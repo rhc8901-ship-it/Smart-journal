@@ -1,0 +1,10 @@
+{
+  "appId": "com.rohanchauhan.tradesjournal",
+  "appName": "Rohan Chauhan Trades Journals Pro",
+  "webDir": "www",
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}
