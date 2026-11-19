@@ -9,7 +9,9 @@
 - Existing RC journal, dashboard, analytics, diary, goals, MT5 import and backup retained.
 
 ## GitHub build
-Upload/replace all project files at the repository root, including `.github/workflows/build-apk.yml`. Then open GitHub Actions → RC Trades Journal Pro APK → Run workflow. Download artifact `RC-Trades-Journal-Pro-APK`.
+Upload/replace all project files at the repository root, including `.github/workflows/build-apk.yml`. The workflow uses android-actions/setup-android@v4. It installs the current command-line tools, accepts licences silently, and installs platform-tools, Android 34 and Build Tools 34.0.0. Do not add a second manual sdkmanager --licenses step.
+
+Then open GitHub Actions → RC Trades Journal Pro APK → Run workflow. Download artifact `RC-Trades-Journal-Pro-APK`.
 
 ## Voice
 Tap the gold microphone and grant microphone permission. Commands include: `aaj ka profit`, `win rate`, `monthly performance`, `naya trade`, `open dashboard`, `open trades`, `open goals`, `open diary`, `show last trade`, `delete last trade` (confirmation required), `help`, `repeat`, `speak slower`, `speak faster`, `English mein baat karo`. Ask normal questions for AI voice replies. Enable voice-first mode in Tools for continuous turn-taking.
