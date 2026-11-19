@@ -1,0 +1,88 @@
+name: RC Trades Journal Pro APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: rc-trades-pro-android
+  cancel-in-progress: true
+jobs:
+  android:
+    name: Build RC Pro Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install SDK packages
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build native voice bridge
+        run: npm run build:native
+      - name: Validate JavaScript
+        run: |
+          node --check va-nlu.js
+          node --check va-core.js
+          node --check rc-runtime.js
+          node --check rc-news.js
+          test -s dist/native-voice.js
+      - name: Prepare Capacitor web directory
+        run: |
+          set -e
+          mkdir -p www
+          cp index.html va-nlu.js va-core.js sw.js rc-runtime.js rc-news.js dist/native-voice.js www/
+          cp icon-192.png icon-512.png icon-maskable-512.png www/
+          cat > www/manifest.json <<'EOF'
+          {
+            "id":"./","name":"Rohan Chauhan Trades Journals Pro","short_name":"RC Trades Pro",
+            "description":"Professional trading journal with Munim voice assistant and AI market analysis.",
+            "start_url":"./","scope":"./","display":"standalone","orientation":"portrait",
+            "background_color":"#06080e","theme_color":"#06080e",
+            "icons":[
+              {"src":"icon-192.png","sizes":"192x192","type":"image/png"},
+              {"src":"icon-512.png","sizes":"512x512","type":"image/png"},
+              {"src":"icon-maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
+            ]
+          }
+          EOF
+      - name: Add Android platform if missing
+        run: |
+          if [ ! -d android ]; then npx cap add android; fi
+      - name: Sync Capacitor and native plugins
+        run: npx cap sync android
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+      - name: Verify APK
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          sha256sum "$APK" > "$APK.sha256"
+          ls -lh "$APK" "$APK.sha256"
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: RC-Trades-Journal-Pro-APK
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/apk/debug/app-debug.apk.sha256
+          if-no-files-found: error
+          retention-days: 14
